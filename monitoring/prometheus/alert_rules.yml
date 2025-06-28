@@ -1,0 +1,106 @@
+groups:
+  - name: p10-backend-alerts
+    rules:
+      # Alerte si l'application est down
+      - alert: BackendDown
+        expr: up{job="p10-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "P10 Backend is down"
+          description: "P10 Backend has been down for more than 1 minute."
+
+      # Alerte sur le taux d'erreur HTTP
+      - alert: HighErrorRate
+        expr: rate(http_request_errors_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors per second."
+
+      # Alerte sur la latence élevée
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency detected"
+          description: "95th percentile latency is {{ $value }} seconds."
+
+      # Alerte sur l'utilisation mémoire
+      - alert: HighMemoryUsage
+        expr: (nodejs_memory_usage_bytes{type="heapUsed"} / nodejs_memory_usage_bytes{type="heapTotal"}) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | humanizePercentage }}."
+
+      # Alerte sur les connexions DB
+      - alert: HighDatabaseConnections
+        expr: db_connections_active > 50
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database connections"
+          description: "Database connections count is {{ $value }}."
+
+  - name: system-alerts
+    rules:
+      # Alerte CPU élevé
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}."
+
+      # Alerte mémoire système élevée
+      - alert: HighSystemMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.9
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High system memory usage"
+          description: "System memory usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}."
+
+      # Alerte espace disque faible
+      - alert: LowDiskSpace
+        expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space"
+          description: "Disk usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}."
+
+  - name: f1-business-alerts
+    rules:
+      # Alerte sur l'activité utilisateur faible
+      - alert: LowUserActivity
+        expr: f1_active_users_total < 5
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: "Low user activity"
+          description: "Only {{ $value }} active users in the last 10 minutes."
+
+      # Alerte sur les paris en échec
+      - alert: BetPlacementFailures
+        expr: increase(http_request_errors_total{route="/bet"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Bet placement failures"
+          description: "{{ $value }} bet placement failures in the last 5 minutes."

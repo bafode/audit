@@ -20,6 +20,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ClerkClientProvider } from './providers/clerk-client.provider';
 import { ClerkAuthGuard } from './auth/clerk-auth.guard';
 import { AuthModule } from './auth/auth.module';
+import { DevMonitoringModule } from './monitoring/dev-monitoring.module';
 import { APP_GUARD } from '@nestjs/core';
 import { UserController } from './user/user.controller';
 import { LeagueController } from './league/league.controller';
@@ -30,11 +31,12 @@ import { LeagueController } from './league/league.controller';
       driver: ApolloDriver,
       plugins: [ApolloServerPluginLandingPageLocalDefault()],
       playground: false,
-      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      autoSchemaFile: true,
       sortSchema: true,
       introspection: true,
       context: ({ req }) => ({ req }),
     }),
+    DevMonitoringModule,
     AvatarModule,
     BetModule,
     GrandprixModule,

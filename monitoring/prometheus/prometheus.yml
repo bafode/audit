@@ -1,0 +1,55 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+scrape_configs:
+  # Backend NestJS (en développement)
+  - job_name: 'p10-backend'
+    static_configs:
+      - targets: ['p10-backend:4500']  # Backend dans le réseau Docker
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # Prometheus lui-même
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter - Métriques système
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['p10-node-exporter:9100']
+    scrape_interval: 15s
+    scrape_timeout: 5s
+
+  # Redis metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['p10-redis:6379']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # OpenTelemetry metrics
+  - job_name: 'otel-metrics'
+    static_configs:
+      - targets: ['p10-backend:9464']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # Jaeger (optionnel en dev)
+  - job_name: 'jaeger'
+    static_configs:
+      - targets: ['p10-jaeger:14269']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
